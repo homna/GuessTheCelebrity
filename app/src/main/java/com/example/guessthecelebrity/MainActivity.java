@@ -10,35 +10,33 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
-    public int celebritiesCount = 0;
-    public int correctAnswerTag;
-    public Bitmap[] celebritiesImage;
-    public String[] celebritiesName;
-    public HashMap<String, String> celebritiesList;
-    public String[] imageURL;
     public ImageView imageView;
     public Button button0, button1, button2, button3;
+    public int celebritiesCount = 0;
+    public ArrayList<String> celebritiesURL = new ArrayList<>();
+    public ArrayList<String> celebritiesName = new ArrayList<>();
+    public Bitmap celebrityImage;
     public ArrayList<Integer> askedQuestions;
+    public int correctAnswerTag;
 
-    public HashMap regexGetImageUrlAndName(String htmlContent) {
-        HashMap<String, String> extractedList = new HashMap<>();
+    public void regexGetImageUrlAndName(String htmlContent) {
+
         int i = 0;
         int j = 0;
         Pattern pattern = Pattern.compile("(celebrities class=exit_trigger_set><img src=//|celebrities class=exit_trigger_set>)(.*?)( alt=|</a>)");
         Matcher matcher = pattern.matcher(htmlContent);
         while (matcher.find()) {
             if (j % 2 == 0) {
-                extractedList.put("URL" + i, matcher.group(2));
-                Log.i("HTML_URL" + i, extractedList.get("URL" + i));
+                celebritiesURL.add("https://" + matcher.group(2));
+                Log.i("HTML_URL" + i, matcher.group(2));
             } else {
-                extractedList.put("Name" + i, matcher.group(2));
-                Log.i("HTML_Name" + i, extractedList.get("Name" + i));
+                celebritiesName.add(matcher.group(2));
+                Log.i("HTML_Name" + i, matcher.group(2));
             }
             j++;
             if (j % 2 == 0 && j > 0) {
@@ -47,22 +45,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         celebritiesCount = i;
-        return extractedList;
+        generateRandomQuestion();
     }
 
-    public void downloadImage(HashMap<String, String> list) {
-        imageURL = new String[celebritiesCount];
-
-        //extract image urls from input HashMap which contains images and names
-        for (int i = 0; i <= celebritiesCount - 1; i++) {
-            imageURL[i] = "https://" + list.get("URL" + i);
-            celebritiesName[i] = list.get("Name" + i);
-        }
+    public void downloadImage(int imageForQuestion) {
         DownloadImageFromUrl downloadImageFromUrl = new DownloadImageFromUrl();
-        //Download all Bitmap images from urls and put them inside the celebritiesImage
         try {
-            celebritiesImage = downloadImageFromUrl.execute(imageURL).get();
-            generateRandomQuestion();
+            celebrityImage = downloadImageFromUrl.execute(celebritiesURL.get(imageForQuestion)).get();
         } catch (Exception e) {
             Log.i("HTML_Error_DImageMethod", e.getMessage());
         }
@@ -70,37 +59,36 @@ public class MainActivity extends AppCompatActivity {
 
     public void generateRandomQuestion() {
         Random random = new Random();
-        int randomOptionNames;
+        int randomWrongCelebrity;
+        ArrayList<Integer> options = new ArrayList<>();//keep track of random options
 
-        //keep track of random options
-        ArrayList<Integer> options = new ArrayList<>();
-        int selectedCelebrity = random.nextInt(celebritiesCount);
+        int correctCelebrity = random.nextInt(celebritiesCount); //select a random celebrity for questioning
         if (askedQuestions.size() != celebritiesCount) { //if game is not over
             if (askedQuestions.size() > 0) { //if game has started before
-                while (askedQuestions.contains(selectedCelebrity)) {
-                    selectedCelebrity = random.nextInt(celebritiesCount);
+                while (askedQuestions.contains(correctCelebrity)) { //ignore repetitive questions
+                    correctCelebrity = random.nextInt(celebritiesCount);
                 }
             }
-            askedQuestions.add(selectedCelebrity);
-            imageView.setImageBitmap(celebritiesImage[selectedCelebrity]);
+            askedQuestions.add(correctCelebrity);
+            downloadImage(correctCelebrity);
+            imageView.setImageBitmap(celebrityImage);
 
             correctAnswerTag = random.nextInt(4);
-            assignButtonText(correctAnswerTag, celebritiesName[selectedCelebrity]);
-            options.add(selectedCelebrity);
-
+            options.add(correctCelebrity);
 
             for (int i = 0; i < 4; i++) {
                 if (i != correctAnswerTag) {
-                    randomOptionNames = random.nextInt(celebritiesCount);
-                    while (options.contains(randomOptionNames)) {
-                        randomOptionNames = random.nextInt(celebritiesCount);
+                    randomWrongCelebrity = random.nextInt(celebritiesCount);
+                    while (options.contains(randomWrongCelebrity)) { //ignore repetitive options
+                        randomWrongCelebrity = random.nextInt(celebritiesCount);
                     }
-                    Log.i("HTML_radomOptionNames", i + " , " + randomOptionNames);
-                    options.add(randomOptionNames);
-                    assignButtonText(i, celebritiesName[randomOptionNames]);
+                    Log.i("HTML_randomWrongCeleb", i + " , " + randomWrongCelebrity);
+                    options.add(randomWrongCelebrity);
+                    assignButtonText(i, celebritiesName.get(randomWrongCelebrity));
+                } else {
+                    assignButtonText(correctAnswerTag, celebritiesName.get(correctCelebrity));
                 }
             }
-
         } else {
             Toast.makeText(this, "Finished!", Toast.LENGTH_LONG).show();
         }
@@ -186,10 +174,7 @@ public class MainActivity extends AppCompatActivity {
             String htmlContentReplaced = htmlContent.replace("\"", "");
             htmlContentReplaced = htmlContentReplaced.replace("amp;", "");
 
-            celebritiesList = regexGetImageUrlAndName(htmlContentReplaced);
-            celebritiesImage = new Bitmap[celebritiesCount];
-            celebritiesName = new String[celebritiesCount];
-            downloadImage(celebritiesList);
+            regexGetImageUrlAndName(htmlContentReplaced);
         } catch (Exception e) {
             Log.i("HTML_Error_onCreate", e.getMessage());
         }
