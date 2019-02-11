@@ -9,24 +9,20 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class DownloadImageFromUrl extends AsyncTask<String, Void, Bitmap[]> {
+public class DownloadImageFromUrl extends AsyncTask<String, Void, Bitmap> {
     @Override
-    protected Bitmap[] doInBackground(String... urls) {
-        Bitmap[] image = new Bitmap[100];
+    protected Bitmap doInBackground(String... urls) {
+        Bitmap image = null;
         HttpURLConnection httpURLConnection;
         InputStream inputStream;
-        int i =0;
         try {
-            for (String url : urls) {
-                Log.i("HTML_ImageUrl","url_"+i+": "+url);
-                URL imageUrl = new URL(url);
-                httpURLConnection = (HttpURLConnection) imageUrl.openConnection();
-                httpURLConnection.connect();
-                inputStream = httpURLConnection.getInputStream();
-                image[i] = BitmapFactory.decodeStream(inputStream);
-                i++;
-                httpURLConnection.disconnect();
-            }
+            Log.i("HTML_ImageUrl", "url " + urls[0]);
+            URL imageUrl = new URL(urls[0]);
+            httpURLConnection = (HttpURLConnection) imageUrl.openConnection();
+            httpURLConnection.connect();
+            inputStream = httpURLConnection.getInputStream();
+            image = BitmapFactory.decodeStream(inputStream);
+            httpURLConnection.disconnect();
             return image;
 
         } catch (Exception e) {
