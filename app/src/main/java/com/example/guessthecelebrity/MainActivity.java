@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     public void generateRandomQuestion() {
         Random random = new Random();
         int randomOptionNames;
-        
+
         //keep track of random options
         ArrayList<Integer> options = new ArrayList<>();
         int selectedCelebrity = random.nextInt(celebritiesCount);
@@ -123,15 +123,47 @@ public class MainActivity extends AppCompatActivity {
 
     public void checkAnswer(View view) {
         final Button button = (Button) view;
-        if (Integer.parseInt(view.getTag().toString()) == correctAnswerTag) {
-            button.setBackgroundColor(getResources().getColor(android.R.color.holo_green_light));
-            button.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    button.setBackgroundResource(R.drawable.back);
-                    generateRandomQuestion();
-                }
-            }, 300);
+
+        try {
+            if (Integer.parseInt(view.getTag().toString()) == correctAnswerTag) {
+                button.setBackgroundColor(getResources().getColor(android.R.color.holo_green_light));
+                button.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        button.setBackgroundResource(R.drawable.back);
+                        generateRandomQuestion();
+                    }
+                }, 800);
+            } else {
+                button.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
+                changeBackgroundColor(correctAnswerTag, android.R.color.holo_green_light);
+                button.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        button.setBackgroundResource(R.drawable.back);
+                        changeBackgroundColor(correctAnswerTag, R.drawable.back);
+                        generateRandomQuestion();
+                    }
+                }, 800);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i("HTML_WrongSelection", e.getMessage());
+        }
+    }
+
+    public void changeBackgroundColor(int tag, int resid) {
+        if (tag == 0) {
+            button0.setBackgroundResource(resid);
+        }
+        if (tag == 1) {
+            button1.setBackgroundResource(resid);
+        }
+        if (tag == 2) {
+            button2.setBackgroundResource(resid);
+        }
+        if (tag == 3) {
+            button3.setBackgroundResource(resid);
         }
     }
 
